@@ -65,7 +65,6 @@ public class AuthenticationService {
     public void signOut() {
         storageService.removeToken();
         isAuthenticatedSourceSubject.onNext(false);
-
     }
 
     public Completable signIn(LoginInfo loginInfo) {
@@ -134,13 +133,12 @@ public class AuthenticationService {
                                 currentUserSubject.onNext(account);
                             }
                             , error -> {
-                                isAuthenticatedSourceSubject.onError(new AuthLoginException());
                                 authenticateInfoService.LogOut();
                                 signOut();
                             }
                     );
         } else {
-            isAuthenticatedSourceSubject.onError(new AuthLoginException());
+            isAuthenticatedSourceSubject.onNext(false);
         }
     }
 }
