@@ -1,3 +1,12 @@
 <resources>
-    <string name="app_name">RestaurantEmployerApplication</string>
+    <string name="app_name">Tamagotchi Staff</string>
+    <string name="login">Логин</string>
+    <string name="password">Пароль</string>
+    <string name="login_enter">Войти</string>
+    <string name="passwordError">Неверный пароль</string>
+    <string name="loginError">Пользователь отсутсвует, проверьте логин</string>
+    <string name="logOut">Выйти</string>
+    <string name="logOutConfirm">Вы действительно хотите выйти?</string>
+    <string name="yes">Да</string>
+    <string name="no">Нет</string>
 </resources>
