@@ -37,7 +37,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
     // Remote Library
-    implementation 'com.github.paulrozhkin:tamagotchi-remote-library:0.3.2'
+    implementation 'com.github.paulrozhkin:tamagotchi-remote-library:1.0.1'
 
     // Retrofit and rx
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
