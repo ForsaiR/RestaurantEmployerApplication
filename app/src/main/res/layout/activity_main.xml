@@ -1,10 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_centerInParent="true"
-    android:layout_centerVertical="true"
-    android:background="@color/colorSuccess"
-    android:layout_centerHorizontal="true">
+    android:layout_height="match_parent">
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <com.google.android.material.tabs.TabLayout
+            android:id="@+id/tabs"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <com.google.android.material.tabs.TabItem
+                android:layout_width="match_parent"
+                android:layout_height="5dp"
+                android:icon="@drawable/ic_add_24dp"
+                android:text="@string/tab_all_orders_label" />
+
+            <!--        <com.google.android.material.tabs.TabItem-->
+            <!--            android:layout_width="match_parent"-->
+            <!--            android:layout_height="5dp"-->
+            <!--            android:icon="@drawable/ic_add_24dp"-->
+            <!--            android:text="@string/tab_new_orders_label" />-->
+
+            <!--        <com.google.android.material.tabs.TabItem-->
+            <!--            android:layout_width="match_parent"-->
+            <!--            android:layout_height="5dp"-->
+            <!--            android:icon="@drawable/ic_done_24dp"-->
+            <!--            android:text="@string/tab_completed_orders_label" />-->
+
+        </com.google.android.material.tabs.TabLayout>
+
+        <!-- Other components and views -->
+        <ListView
+            android:id="@+id/orderList"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:divider="@color/colorPrimary"
+            android:dividerHeight="1dp"
+            tools:listitem="@layout/orders_item_lv" />
+    </LinearLayout>
+
+    <com.google.android.material.bottomappbar.BottomAppBar
+        android:id="@+id/bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:backgroundTint="@color/colorPrimary"
+        app:navigationIcon="@drawable/ic_menu_24dp" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:backgroundTint="@color/colorPrimary"
+        app:layout_anchor="@id/bar"
+        app:srcCompat="@drawable/ic_refresh_24dp"
+        app:tint="@color/colorWhite" />
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
