@@ -9,4 +9,20 @@
     <string name="logOutConfirm">Вы действительно хотите выйти?</string>
     <string name="yes">Да</string>
     <string name="no">Нет</string>
+    <string name="orderStateText">Состояние:</string>
+    <string name="placeholderOrderState">В ожидании</string>
+    <string name="placeholderTime">27.05.2020 16:30</string>
+    <string name="orderNumberText">Заказ №</string>
+    <string name="placeholderOrderId">3245</string>
+    <string name="tab_new_orders_label">Активные</string>
+    <string name="tab_completed_orders_label">Завершенные</string>
+    <string name="no_place_status">Нет мест</string>
+    <string name="payment_madeing_status">Оплата</string>
+    <string name="payment_error_status">Ошибка оплаты</string>
+    <string name="confirmed_status">Подтвежден</string>
+    <string name="preparing_status">Идет подготовка</string>
+    <string name="prepared_status">Подготовлен</string>
+    <string name="completed_status">Завершен</string>
+    <string name="staff_notified_status">Персонал оповещен</string>
+    <string name="tab_all_orders_label">Все заказы</string>
 </resources>

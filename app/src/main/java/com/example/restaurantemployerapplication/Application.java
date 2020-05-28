@@ -4,7 +4,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
 
-import com.example.restaurantemployerapplication.services.AuthenticationService;
 import com.example.restaurantemployerapplication.ui.login.LoginActivity;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
