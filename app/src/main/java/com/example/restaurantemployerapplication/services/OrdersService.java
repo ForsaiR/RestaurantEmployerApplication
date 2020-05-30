@@ -14,11 +14,15 @@ import com.tamagotchi.tamagotchiserverprotocol.routers.IOrdersApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IRestaurantsApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IUsersApiService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import io.reactivex.rxjava3.core.Completable;
+import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -49,7 +53,100 @@ public class OrdersService {
     }
 
     /**
-     * Получить заказы, которые ожидают приготовления.
+     * Получать активные заказы в системе в реальном времени (обновление каждый 15 секунд)
+     *
+     * @return Observable на заказы
+     */
+    public Observable<OrderModel> getActiveOrderInRealTime() {
+        long firstEmit = 0;
+        return Observable.interval(updateInterval, TimeUnit.SECONDS, Schedulers.io())
+                .startWithItem(firstEmit)
+                .flatMap(time -> getActiveOrders().toObservable().flatMapIterable(itemOrders -> itemOrders))
+                .distinct();
+    }
+
+    /**
+     * Получить активные заказы системы.
+     *
+     * @return Single на коллекци заказов
+     */
+    public Single<List<OrderModel>> getActiveOrders() {
+        return ordersApiService.
+                getAllOrders(null, OrderStatus.Confirmed, null, null)
+                .concatWith(
+                        ordersApiService.getAllOrders(null, OrderStatus.Preparing, null, null)
+                )
+                .concatWith(
+                        ordersApiService.getAllOrders(null, OrderStatus.Prepared, null, null)
+                )
+                .concatWith(
+                        ordersApiService.getAllOrders(null, OrderStatus.PaymentMadeing, null, null)
+                ).reduce((x, y) -> {
+                    List<OrderModel> orders = new ArrayList<>();
+                    orders.addAll(x);
+                    orders.addAll(y);
+                    return orders;
+                }).toSingle();
+
+//        return ordersApiService.
+//                getAllOrders(null, OrderStatus.Confirmed, null, null)
+//                .mergeWith(
+//                        ordersApiService.getAllOrders(null, OrderStatus.Preparing, null, null)
+//                )
+//                .mergeWith(
+//                        ordersApiService.getAllOrders(null, OrderStatus.Prepared, null, null)
+//                )
+//                .mergeWith(
+//                        ordersApiService.getAllOrders(null, OrderStatus.PaymentMadeing, null, null)
+//                ).toObservable().single(new ArrayList<>());
+    }
+
+    /**
+     * Получать завершенные заказы в системе в реальном времени (обновление каждый 15 секунд)
+     *
+     * @return Observable на заказы
+     */
+    public Observable<OrderModel> getCompletedOrderInRealTime() {
+        long firstEmit = 0;
+        return Observable.interval(updateInterval, TimeUnit.SECONDS, Schedulers.io())
+                .startWithItem(firstEmit)
+                .flatMap(time -> getCompletedOrders().toObservable().flatMapIterable(itemOrders -> itemOrders))
+                .distinct();
+    }
+
+    /**
+     * Получить завершенные заказы системы.
+     *
+     * @return Single на коллекци заказов
+     */
+    public Single<List<OrderModel>> getCompletedOrders() {
+        return ordersApiService.
+                getAllOrders(null, OrderStatus.PaymentError, null, null)
+                .mergeWith(
+                        ordersApiService.getAllOrders(null, OrderStatus.NoPlace, null, null)
+                )
+                .mergeWith(
+                        ordersApiService.getAllOrders(null, OrderStatus.Completed, null, null)
+                ).reduce((x, y) -> {
+                    List<OrderModel> orders = new ArrayList<>();
+                    orders.addAll(x);
+                    orders.addAll(y);
+                    return orders;
+                }).toSingle();
+    }
+
+    /**
+     * Получить все заказы системы.
+     *
+     * @return Single на коллекци заказов
+     */
+    public Single<List<OrderModel>> getAllOrders() {
+        return ordersApiService.
+                getAllOrders(null, null, null, null);
+    }
+
+    /**
+     * Получить активные заказы системы.
      * TODO: присутсвует серьезный баг: если состояние было изменено на такое же,
      * которое приходило до этого, то эмита элемента не будет. Исправление займет много времени,
      * пока ситуации, когда такое может быть в автоматическом режиме, не существует.
@@ -58,7 +155,7 @@ public class OrdersService {
      *
      * @return observable на заказы со статусом {@link OrderStatus#Preparing}.
      */
-    public Observable<FullOrder> preparingOrders() {
+    public Observable<FullOrder> activeOrders() {
         long firstEmit = 0;
         return Observable.interval(updateInterval, TimeUnit.SECONDS, Schedulers.io())
                 .startWithItem(firstEmit)

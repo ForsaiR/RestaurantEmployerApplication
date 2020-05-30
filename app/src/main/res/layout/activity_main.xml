@@ -5,45 +5,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <LinearLayout
+    <FrameLayout
+        android:id="@+id/fragment_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
-
-        <com.google.android.material.tabs.TabLayout
-            android:id="@+id/tabs"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <com.google.android.material.tabs.TabItem
-                android:layout_width="match_parent"
-                android:layout_height="5dp"
-                android:icon="@drawable/ic_add_24dp"
-                android:text="@string/tab_all_orders_label" />
-
-            <!--        <com.google.android.material.tabs.TabItem-->
-            <!--            android:layout_width="match_parent"-->
-            <!--            android:layout_height="5dp"-->
-            <!--            android:icon="@drawable/ic_add_24dp"-->
-            <!--            android:text="@string/tab_new_orders_label" />-->
-
-            <!--        <com.google.android.material.tabs.TabItem-->
-            <!--            android:layout_width="match_parent"-->
-            <!--            android:layout_height="5dp"-->
-            <!--            android:icon="@drawable/ic_done_24dp"-->
-            <!--            android:text="@string/tab_completed_orders_label" />-->
-
-        </com.google.android.material.tabs.TabLayout>
-
-        <!-- Other components and views -->
-        <ListView
-            android:id="@+id/orderList"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:divider="@color/colorPrimary"
-            android:dividerHeight="1dp"
-            tools:listitem="@layout/orders_item_lv" />
-    </LinearLayout>
+        android:layout_height="match_parent" />
 
     <com.google.android.material.bottomappbar.BottomAppBar
         android:id="@+id/bar"
