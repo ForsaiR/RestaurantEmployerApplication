@@ -22,7 +22,11 @@ public class LoginViewModel extends ViewModel {
     private Disposable statedCheck;
 
     public LoginViewModel() {
-        this.authenticationService = Application.getDaggerGraph().authService();
+        this(Application.getDaggerGraph().authService());
+    }
+
+    public LoginViewModel(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
         loginStateSubject.onNext(LoginState.InProgress);
         statedCheck = this.authenticationService
                 .isAuthenticated()

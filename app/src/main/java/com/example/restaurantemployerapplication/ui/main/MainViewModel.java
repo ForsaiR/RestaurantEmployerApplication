@@ -30,10 +30,13 @@ public class MainViewModel extends ViewModel {
     private Disposable subscriber;
 
     public MainViewModel() {
-        Application.startWorking();
+        this(Application.getDaggerGraph().authService(), Application.getDaggerGraph().ordersService());
+    }
 
-        authenticationService = Application.getDaggerGraph().authService();
-        ordersService = Application.getDaggerGraph().ordersService();
+    public MainViewModel(AuthenticationService authenticationService, OrdersService ordersService) {
+        Application.startWorking();
+        this.authenticationService = authenticationService;
+        this.ordersService = ordersService;
         refresh();
     }
 
