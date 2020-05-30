@@ -27,7 +27,7 @@ public class OrdersFragment extends Fragment {
     private OrdersViewModel viewModel;
     private ListView ordersListView;
     private TabLayout tabs;
-    OrdersFragment ordersFragment;
+    private OrdersFragment ordersFragment;
 
     public static OrdersFragment newInstance() {
         return new OrdersFragment();
