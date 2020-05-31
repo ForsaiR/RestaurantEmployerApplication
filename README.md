@@ -12,6 +12,7 @@ This is an android staff application for the Tamagotchi restaurant chain.
 - [Web client](https://github.com/paulrozhkin/tamagotchi-web-client)
 - [Server](https://github.com/paulrozhkin/tamagotchi-server)
 - [Android client application](https://github.com/paulrozhkin/tamagotch-android-client)
+- [Tamagotchi Remote Library](https://github.com/paulrozhkin/tamagotchi-remote-library)
 
 ---
 ## Documentation
