@@ -165,7 +165,7 @@ public class OrdersService {
                         .map(client -> new FullOrder(fullOrder, client)))
                 // Получаем элементы меню, которые заказал пользователь
                 .flatMap(fullOrder -> {
-                    if (fullOrder.getMenu() != null) {
+                    if (orderModel.getMenu() != null) {
                         return Observable
                                 .just(orderModel.getMenu())
                                 .flatMapIterable(listId -> listId)
