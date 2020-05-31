@@ -1,5 +1,7 @@
 package com.example.restaurantemployerapplication.ui.order;
 
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -16,8 +18,10 @@ import com.tamagotchi.tamagotchiserverprotocol.models.RestaurantModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.TableModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.UserModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.enums.OrderStatus;
+import com.tamagotchi.tamagotchiserverprotocol.models.enums.StaffStatus;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.CompletableOnSubscribe;
@@ -26,6 +30,8 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class ViewOrderViewModel extends ViewModel {
+
+    private static final String TAG = "ViewOrderViewModel";
 
     /**
      * Id заказа.
@@ -41,6 +47,11 @@ public class ViewOrderViewModel extends ViewModel {
      * Состояние заказа.
      */
     private MutableLiveData<OrderStatus> orderStatusSubject = new MutableLiveData<>();
+
+    /**
+     * Состояние готовности персонала.
+     */
+    private MutableLiveData<StaffStatus> staffStatusSubject = new MutableLiveData<>();
 
     /**
      * Ресторан посещения.
@@ -75,7 +86,7 @@ public class ViewOrderViewModel extends ViewModel {
     /**
      * В заказе было выбрано меню.
      */
-    private MutableLiveData<Boolean> isOrderWithMenuSubject = new MutableLiveData<>();
+    private MutableLiveData<Boolean> isOrderWithMenuSubject = new MutableLiveData<>(false);
 
     /**
      * Краткая информация о заказе (OrderModel) загружена.
@@ -158,7 +169,23 @@ public class ViewOrderViewModel extends ViewModel {
             this.amountSubject.setValue(shortOrder.getTotalAmount());
         }
 
+        // TODO: не идеальный алгоритм, поправить. Если статусы не будут одинаквыми, то так и останется Notifying.
+        StaffStatus staffStatus = StaffStatus.Notifying;
+        if (order.getOrderCooksStatus() == StaffStatus.Notified && order.getOrderWaitersStatus() == StaffStatus.Notified) {
+            staffStatus = StaffStatus.Notified;
+        }
+
+        if (order.getOrderCooksStatus() == StaffStatus.Pending || order.getOrderWaitersStatus() == StaffStatus.Pending) {
+            staffStatus = StaffStatus.Pending;
+        }
+
+        if (order.getOrderCooksStatus() == StaffStatus.Ready && order.getOrderWaitersStatus() == StaffStatus.Ready) {
+            staffStatus = StaffStatus.Ready;
+        }
+
+        this.staffStatusSubject.setValue(staffStatus);
         this.orderStatusSubject.setValue(order.getOrderStatus());
+
         this.numberPersonsSubject.setValue(order.getNumberOfPersons());
 
         FullVisitTime fullVisitTime = new FullVisitTime(order.getVisitTime());
@@ -169,7 +196,10 @@ public class ViewOrderViewModel extends ViewModel {
                 .subscribeOn(Schedulers.io())
                 .subscribe(
                         this::initFullOrderInfo,
-                        error -> isFullInfoErrorSubject.setValue(true)
+                        error -> {
+                            isFullInfoErrorSubject.setValue(true);
+                            Log.e(TAG, "Can't get full order", error);
+                        }
                 );
 
         compositeDisposable.add(fullOrderSubscriber);
@@ -188,13 +218,14 @@ public class ViewOrderViewModel extends ViewModel {
      * Осо
      */
     @Override
-    protected void onCleared () {
+    protected void onCleared() {
         compositeDisposable.dispose();
-        super.onCleared ();
+        super.onCleared();
     }
 
     /**
      * Получить Observable на id заказа.
+     *
      * @return Observable
      */
     public LiveData<Integer> getOrderIdObservable() {
@@ -203,6 +234,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на id заказа.
+     *
      * @return Observable
      */
     public LiveData<FullVisitTime> getVisitTimeObservable() {
@@ -211,6 +243,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на статус заказа.
+     *
      * @return Observable
      */
     public LiveData<OrderStatus> getOrderStatusObservable() {
@@ -218,7 +251,17 @@ public class ViewOrderViewModel extends ViewModel {
     }
 
     /**
+     * Получить Observable на статус персонала по заказу.
+     *
+     * @return Observable
+     */
+    public LiveData<StaffStatus> getStaffStatusObservable() {
+        return staffStatusSubject;
+    }
+
+    /**
      * Получить Observable на ресторан в который поступил заказ.
+     *
      * @return Observable
      */
     public LiveData<RestaurantModel> getRestaurantObservable() {
@@ -227,6 +270,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable кол-во мест в заказе.
+     *
      * @return Observable
      */
     public LiveData<Integer> getNumberPersonsObservable() {
@@ -235,6 +279,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на столик заказа.
+     *
      * @return Observable
      */
     public LiveData<TableModel> getTableObservable() {
@@ -243,6 +288,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на клиента, сделавшего заказ.
+     *
      * @return Observable
      */
     public LiveData<UserModel> getClientObservable() {
@@ -251,6 +297,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на сумму заказа.
+     *
      * @return Observable
      */
     public LiveData<Integer> getAmountObservable() {
@@ -259,6 +306,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на меню заказа.
+     *
      * @return Observable
      */
     public LiveData<List<FullMenuItem>> getOrderMenuObservable() {
@@ -268,6 +316,7 @@ public class ViewOrderViewModel extends ViewModel {
     /**
      * Получить Observable на наличие заказанного меню в заказе.
      * Если false, то смысла запрашивать меню и сумму заказа нет.
+     *
      * @return Observable
      */
     public LiveData<Boolean> getIsOrderWithMenuObservable() {
@@ -276,6 +325,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на готовность краткой инфорации по заказу.
+     *
      * @return Observable
      */
     public LiveData<Boolean> getIsShortInfoLoadedObservable() {
@@ -284,6 +334,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на ошибку при загрузки краткой информации по заказу.
+     *
      * @return Observable
      */
     public LiveData<Boolean> getIsShortInfoErrorObservable() {
@@ -292,6 +343,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на готовность полной инфорации по заказу.
+     *
      * @return Observable
      */
     public LiveData<Boolean> getIsFullInfoLoadedObservable() {
@@ -300,6 +352,7 @@ public class ViewOrderViewModel extends ViewModel {
 
     /**
      * Получить Observable на ошибку при загрузки полной информации по заказу.
+     *
      * @return Observable
      */
     public LiveData<Boolean> getIsFullInfoErrorObservable() {

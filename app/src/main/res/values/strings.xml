@@ -52,5 +52,8 @@
     <string name="rub_symbol">₽</string>
     <string name="order_person_text">Посетитель:</string>
     <string name="placeholder_order_person">Василий (+71231241243)</string>
+    <string name="order_loading_error">Ошибка загрузки заказа</string>
+    <string name="unknown_text">\???</string>
+    <string name="loading_text">Загрузка</string>
 
 </resources>

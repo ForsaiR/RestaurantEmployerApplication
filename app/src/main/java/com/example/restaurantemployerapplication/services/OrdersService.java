@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.example.restaurantemployerapplication.data.model.FullMenuItem;
 import com.example.restaurantemployerapplication.data.model.FullOrder;
+import com.tamagotchi.tamagotchiserverprotocol.models.MenuItem;
 import com.tamagotchi.tamagotchiserverprotocol.models.OrderModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.OrderPathModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.enums.OrderStatus;
@@ -145,6 +146,7 @@ public class OrdersService {
 
     /**
      * Заполнить сущность заказа.
+     *
      * @param orderModel краткая информация о заказе, который нужно заполнить.
      * @return Observable на заполненную сущность заказа.
      */
@@ -157,11 +159,14 @@ public class OrdersService {
                         .map(restaurant -> new FullOrder(fullOrder, restaurant)))
                 // Получаем пользователя, который сделал заказ.
                 .flatMap(fullOrder -> usersApiService.getUserById(orderModel.getClient())
-                        .doOnError(error -> Log.e(LogTag, "Can'not get client with id " + orderModel.getClient(), error))
+                        .doOnError(error ->
+                                Log.e(LogTag, "Can'not get client with id " + orderModel.getClient(), error)
+                        )
                         .map(client -> new FullOrder(fullOrder, client)))
                 // Получаем элементы меню, которые заказал пользователь
-                .flatMap(fullOrder ->
-                        Observable
+                .flatMap(fullOrder -> {
+                    if (fullOrder.getMenu() != null) {
+                        return Observable
                                 .just(orderModel.getMenu())
                                 .flatMapIterable(listId -> listId)
                                 .flatMap(id -> menuApiService.getMenuItemById(orderModel.getRestaurant(), id)
@@ -176,7 +181,12 @@ public class OrdersService {
                                 .toList()
                                 .toObservable()
                                 .map(listFullMenu -> new FullOrder(fullOrder, listFullMenu))
-                                .single(fullOrder))
+                                .single(fullOrder);
+                    } else {
+                        return Single.just(fullOrder);
+                    }
+                })
+                .doOnError(error -> Log.e(LogTag, "Can'not get order menu", error))
                 // Получаем поворов, которые исполняют заказ
                 .flatMap(fullOrder ->
                         Observable
