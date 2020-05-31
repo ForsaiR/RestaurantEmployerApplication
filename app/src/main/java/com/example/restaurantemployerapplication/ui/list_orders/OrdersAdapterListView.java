@@ -2,6 +2,7 @@ package com.example.restaurantemployerapplication.ui.list_orders;
 
 import android.content.Context;
 import android.icu.text.SimpleDateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class OrdersAdapterListView extends ArrayAdapter<OrderModel> {
+
+    private String TAG = "OrdersAdapterListView";
 
     private OrderStatusToStringConverter statusConverter;
     private static SimpleDateFormat timeFormat = new SimpleDateFormat("dd.MM.yyyy kk:mm");
@@ -59,14 +62,15 @@ public class OrdersAdapterListView extends ArrayAdapter<OrderModel> {
             orderStatusString += " (" + getContext().getResources().getString(R.string.staff_notified_status) + ")";
         }
 
-            viewHolder.state.setText(orderStatusString);
+        viewHolder.state.setText(orderStatusString);
         viewHolder.id.setText(order.getId() != null ? order.getId().toString() : textError);
 
         String timeString = textError;
         try {
             Calendar startTime = RfcToCalendarConverter.convert(order.getVisitTime().getStart());
-            timeString = timeFormat.format(startTime);
-        } catch (IllegalArgumentException ignored) {
+            timeString = timeFormat.format(startTime.getTime());
+        } catch (IllegalArgumentException ex) {
+            Log.e(TAG, "Can't convert visit time", ex);
         }
 
         viewHolder.time.setText(timeString);
