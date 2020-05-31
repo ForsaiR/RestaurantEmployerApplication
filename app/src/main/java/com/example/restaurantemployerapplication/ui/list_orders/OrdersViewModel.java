@@ -1,5 +1,7 @@
 package com.example.restaurantemployerapplication.ui.list_orders;
 
+import android.util.Log;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
@@ -12,13 +14,19 @@ import com.tamagotchi.tamagotchiserverprotocol.models.enums.OrderStatus;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
+import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class OrdersViewModel extends ViewModel {
+
+    private String TAG = "OrdersViewModel";
+
+    private CompositeDisposable activeUpdate = new CompositeDisposable();
 
     // Сервис для работы с заказами.
     private OrdersService ordersService;
@@ -123,7 +131,7 @@ public class OrdersViewModel extends ViewModel {
     private void addActiveOrders(OrderModel order) {
         OrderModel replacedOrder = null;
 
-        List<OrderModel> activeOrders = activeOrdersSubject.getValue();
+        List<OrderModel> activeOrders = getActiveOrders().getValue();
 
         if (activeOrders == null) {
             activeOrders = new ArrayList<>();
@@ -139,21 +147,49 @@ public class OrdersViewModel extends ViewModel {
             activeOrders.set(index, order);
         } catch (Exception ignored) {
             activeOrders.add(order);
+
+            // Проверка на завершение заказа
+            Disposable updateTimer = Observable.interval(15, TimeUnit.SECONDS)
+                    .flatMap(time -> ordersService.getOrderById(order.getId()).toObservable())
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .distinctUntilChanged()
+                    .takeUntil(this::isOrderCompleted)
+                    .subscribe(orderUpdate -> {
+                        if (isOrderCompleted(orderUpdate)) {
+                            removeActiveOrders(orderUpdate);
+                        }
+                    }, error -> {
+                        Log.i(TAG, "Can'not get order with id: " + order.getId());
+                    });
+
+            activeUpdate.add(updateTimer);
         }
 
         activeOrdersSubject.setValue(new ArrayList<>(activeOrders));
     }
 
+    private boolean isOrderCompleted(OrderModel order) {
+        return order.getOrderStatus() == OrderStatus.Completed || order.getOrderStatus() == OrderStatus.PaymentError
+                || order.getOrderStatus() == OrderStatus.NoPlace;
+    }
+
     private void removeActiveOrders(OrderModel order) {
-        List<OrderModel> activeOrders = activeOrdersSubject.getValue();
+        List<OrderModel> activeOrders = getActiveOrders().getValue();
 
         if (activeOrders == null) {
             activeOrders = new ArrayList<>();
         }
 
-        if (activeOrders.contains(order)) {
-            activeOrders.remove(order);
+        try {
+            OrderModel removedOrder = Observable.fromIterable(activeOrders)
+                    .filter(preparingOrder -> preparingOrder.getId().equals(order.getId()))
+                    .blockingFirst();
+
+            activeOrders.remove(removedOrder);
             activeOrdersSubject.setValue(new ArrayList<>(activeOrders));
+        } catch (Exception e) {
+            Log.i(TAG, "Can't remove order from active orders", e);
         }
     }
 
@@ -185,5 +221,11 @@ public class OrdersViewModel extends ViewModel {
 
     public LiveData<OrderModel> getSelectedOrder() {
         return selectedOrderSubject;
+    }
+
+    @Override
+    protected void onCleared() {
+        super.onCleared();
+        activeUpdate.dispose();
     }
 }
