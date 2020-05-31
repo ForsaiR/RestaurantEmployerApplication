@@ -12,6 +12,7 @@ import com.tamagotchi.tamagotchiserverprotocol.routers.IDishesApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IMenuApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IOrdersApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IRestaurantsApiService;
+import com.tamagotchi.tamagotchiserverprotocol.routers.ITablesApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IUsersApiService;
 
 import java.util.ArrayList;
@@ -21,8 +22,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-import io.reactivex.rxjava3.core.Completable;
-import io.reactivex.rxjava3.core.Flowable;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -37,6 +36,7 @@ public class OrdersService {
     private final IMenuApiService menuApiService;
     private final IDishesApiService dishesApiService;
     private IRestaurantsApiService restaurantsApiService;
+    private ITablesApiService tablesApiService;
     private IUsersApiService usersApiService;
 
     @Inject
@@ -44,11 +44,13 @@ public class OrdersService {
                   IMenuApiService menuApiService,
                   IDishesApiService dishesApiService,
                   IRestaurantsApiService restaurantsApiService,
+                  ITablesApiService tablesApiService,
                   IUsersApiService usersApiService) {
         this.ordersApiService = ordersApiService;
         this.menuApiService = menuApiService;
         this.dishesApiService = dishesApiService;
         this.restaurantsApiService = restaurantsApiService;
+        this.tablesApiService = tablesApiService;
         this.usersApiService = usersApiService;
     }
 
@@ -87,18 +89,6 @@ public class OrdersService {
                     orders.addAll(y);
                     return orders;
                 }).toSingle();
-
-//        return ordersApiService.
-//                getAllOrders(null, OrderStatus.Confirmed, null, null)
-//                .mergeWith(
-//                        ordersApiService.getAllOrders(null, OrderStatus.Preparing, null, null)
-//                )
-//                .mergeWith(
-//                        ordersApiService.getAllOrders(null, OrderStatus.Prepared, null, null)
-//                )
-//                .mergeWith(
-//                        ordersApiService.getAllOrders(null, OrderStatus.PaymentMadeing, null, null)
-//                ).toObservable().single(new ArrayList<>());
     }
 
     /**
@@ -146,54 +136,80 @@ public class OrdersService {
     }
 
     /**
-     * Получить активные заказы системы.
-     * TODO: присутсвует серьезный баг: если состояние было изменено на такое же,
-     * которое приходило до этого, то эмита элемента не будет. Исправление займет много времени,
-     * пока ситуации, когда такое может быть в автоматическом режиме, не существует.
-     * TODO: при ошибке загрузки зависимых сущностей целевой элемент (FullOrder) не будет испускаться.
-     * Ожидаемый результат: должен испускаться с null в зависимом элементе.
-     *
-     * @return observable на заказы со статусом {@link OrderStatus#Preparing}.
+     * Получить заказ по Id
      */
-    public Observable<FullOrder> activeOrders() {
-        long firstEmit = 0;
-        return Observable.interval(updateInterval, TimeUnit.SECONDS, Schedulers.io())
-                .startWithItem(firstEmit)
-                .flatMap(time -> ordersApiService.getAllOrders(null,
-                        null,
-                        null,
-                        null).toObservable())
-                .flatMapIterable(itemOrders -> itemOrders)
-                .distinct()
-                .flatMap(order ->
-                        // Получаем элементы меню, которые заказал пользователь
-                        Observable.just(order.getMenu())
+    public Single<OrderModel> getOrderById(Integer orderId) {
+        return ordersApiService.getOrderById(orderId);
+    }
+
+
+    /**
+     * Заполнить сущность заказа.
+     * @param orderModel краткая информация о заказе, который нужно заполнить.
+     * @return Observable на заполненную сущность заказа.
+     */
+    public Single<FullOrder> getFullOrder(OrderModel orderModel) {
+        return Single.just(orderModel)
+                .map(orderShortInfo -> new FullOrder(orderModel))
+                // Получаем ресторана, в котором сделан заказ.
+                .flatMap(fullOrder -> restaurantsApiService.getRestaurantById(orderModel.getRestaurant())
+                        .doOnError(error -> Log.e(LogTag, "Can'not get restaurant with id " + orderModel.getRestaurant(), error))
+                        .map(restaurant -> new FullOrder(fullOrder, restaurant)))
+                // Получаем пользователя, который сделал заказ.
+                .flatMap(fullOrder -> usersApiService.getUserById(orderModel.getClient())
+                        .doOnError(error -> Log.e(LogTag, "Can'not get client with id " + orderModel.getClient(), error))
+                        .map(client -> new FullOrder(fullOrder, client)))
+                // Получаем элементы меню, которые заказал пользователь
+                .flatMap(fullOrder ->
+                        Observable
+                                .just(orderModel.getMenu())
                                 .flatMapIterable(listId -> listId)
-                                .flatMap(id -> menuApiService.getMenuItemById(order.getRestaurant(), id).toObservable()
-                                        .doOnError(x -> Log.e(LogTag, "Can'not find dish with id " + id))
-                                        .onErrorResumeNext(
-                                                x -> {
-                                                    Log.e(LogTag, x.toString());
-                                                    return Observable.empty();
-                                                })
+                                .flatMap(id -> menuApiService.getMenuItemById(orderModel.getRestaurant(), id)
+                                        .toObservable()
+                                        .doOnError(error -> Log.e(LogTag, "Can'not get dish with id " + id, error))
+                                        .onErrorResumeNext(x -> Observable.empty())
                                         .flatMap(menuItem -> dishesApiService.getDishById(menuItem.getDishId())
                                                 .toObservable()
-                                                .doOnError(x -> Log.e(LogTag, "Can'not find dish with id " + menuItem.getDishId()))
-                                                .onErrorResumeNext(
-                                                        x -> {
-                                                            return Observable.empty();
-                                                        })
+                                                .doOnError(error -> Log.e(LogTag, "Can'not get dish with id " + menuItem.getDishId(), error))
+                                                .onErrorResumeNext(x -> Observable.empty())
                                                 .map(dish -> new FullMenuItem(menuItem, dish))))
                                 .toList()
                                 .toObservable()
-                                .map(listFullMenu -> new FullOrder(order, listFullMenu))
-                                .flatMap(fullOrder -> restaurantsApiService.getRestaurantById(order.getRestaurant())
-                                        .doOnError(x -> Log.e(LogTag, "Can'not find restaurant with id " + order.getRestaurant()))
-                                        .map(restaurant -> new FullOrder(fullOrder, restaurant)).toObservable())
-                                .flatMap(fullOrder -> usersApiService.getUserById(order.getClient())
-                                        .doOnError(x -> Log.e(LogTag, "Can'not find user with id " + order.getClient()))
-                                        .map(client -> new FullOrder(fullOrder, client)).toObservable())
-                );
+                                .map(listFullMenu -> new FullOrder(fullOrder, listFullMenu))
+                                .single(fullOrder))
+                // Получаем поворов, которые исполняют заказ
+                .flatMap(fullOrder ->
+                        Observable
+                                .just(orderModel.getCooks())
+                                .flatMapIterable(cooksIds -> cooksIds)
+                                .flatMap(cookId -> usersApiService.getUserById(cookId)
+                                        .toObservable()
+                                        .doOnError(error -> Log.e(LogTag, "Can'not get cook with id " + cookId, error))
+                                        .onErrorResumeNext(x -> Observable.empty())
+                                )
+                                .toList()
+                                .toObservable()
+                                .map(cooks -> new FullOrder(fullOrder, cooks, true))
+                                .single(fullOrder))
+                // Получаем официантов, которые исполняют заказ
+                .flatMap(fullOrder ->
+                        Observable.just(orderModel.getWaiters())
+                                .flatMapIterable(waitersIds -> waitersIds)
+                                .flatMap(waiterId -> usersApiService.getUserById(waiterId)
+                                        .toObservable()
+                                        .doOnError(error -> Log.e(LogTag, "Can'not get waiter with id " + waiterId, error))
+                                        .onErrorResumeNext(x -> Observable.empty())
+                                )
+                                .toList()
+                                .toObservable()
+                                .map(waiters -> new FullOrder(fullOrder, waiters, false))
+                                .single(fullOrder))
+                // Получаем первый столик, которые забронирован в заказе
+                .flatMap(fullOrder -> tablesApiService.getMenuItemById(orderModel.getRestaurant(), orderModel.getReservedTable().get(0))
+                        .doOnError(error -> Log.e(LogTag, "Can'not get table with id " + orderModel.getReservedTable().get(0), error))
+                        .onErrorReturn(x -> null)
+                        .map(table -> new FullOrder(fullOrder, table)))
+                ;
     }
 
     public Single<OrderModel> takeToWork(FullOrder order) {

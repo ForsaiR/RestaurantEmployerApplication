@@ -7,6 +7,7 @@ import com.tamagotchi.tamagotchiserverprotocol.routers.IDishesApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IMenuApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IOrdersApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IRestaurantsApiService;
+import com.tamagotchi.tamagotchiserverprotocol.routers.ITablesApiService;
 import com.tamagotchi.tamagotchiserverprotocol.routers.IUsersApiService;
 import com.tamagotchi.tamagotchiserverprotocol.services.IAuthenticateInfoService;
 
@@ -45,5 +46,9 @@ public class RemoteLibraryModule {
 
     @Provides static IUsersApiService provideUsersApiService() {
         return RestaurantClient.getInstance().getUsersService();
+    }
+
+    @Provides static ITablesApiService provideTablesApiService() {
+        return RestaurantClient.getInstance().getTablesApiService();
     }
 }
