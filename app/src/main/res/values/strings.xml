@@ -50,5 +50,7 @@
     <string name="number_symbol">№</string>
     <string name="placeholder_menu_item_name">Летучая мышь по китайски</string>
     <string name="rub_symbol">₽</string>
+    <string name="order_person_text">Посетитель:</string>
+    <string name="placeholder_order_person">Василий (+71231241243)</string>
 
 </resources>
