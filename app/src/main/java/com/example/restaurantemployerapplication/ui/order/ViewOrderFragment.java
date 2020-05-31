@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AlphaAnimation;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.ProgressBar;
@@ -24,6 +25,7 @@ import com.example.restaurantemployerapplication.data.model.FullVisitTime;
 import com.example.restaurantemployerapplication.services.OrderStatusToStringConverter;
 import com.example.restaurantemployerapplication.services.RfcToCalendarConverter;
 import com.example.restaurantemployerapplication.ui.list_orders.OrdersViewModel;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.tamagotchi.tamagotchiserverprotocol.models.OrderModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.RestaurantModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.TableModel;
@@ -68,6 +70,7 @@ public class ViewOrderFragment extends Fragment {
     private TextView restaurantAddressTV;
     private TextView orderTableTV;
     private ListView orderMenuLV;
+    private Button orderWorkButton;
 
 
     @Override
@@ -113,6 +116,10 @@ public class ViewOrderFragment extends Fragment {
         orderPaymentAmountContainer = orderV.findViewById(R.id.order_payment_amount_container);
         orderMenuContainer = orderV.findViewById(R.id.order_menu_container);
 
+        // Кнопки
+        orderWorkButton = orderV.findViewById(R.id.order_work_button);
+        initOrderWorkButtonClickHandler();
+
         // Поля заказа
         orderIdTV = orderV.findViewById(R.id.orderId);
         orderPaymentAmountTV = orderV.findViewById(R.id.order_payment_amount);
@@ -125,6 +132,7 @@ public class ViewOrderFragment extends Fragment {
         orderTableTV = orderV.findViewById(R.id.order_table);
         orderMenuLV = orderV.findViewById(R.id.order_menu_list_view);
 
+        // Устанавливаем элементы на загрузку
         orderPersonTV.setText(R.string.loading_text);
         restaurantAddressTV.setText(R.string.loading_text);
         orderTableTV.setText(R.string.loading_text);
@@ -134,9 +142,52 @@ public class ViewOrderFragment extends Fragment {
         startLoadingAnimation(orderTableTV);
     }
 
+    private void initOrderWorkButtonClickHandler() {
+        orderWorkButton.setOnClickListener(view -> {
+            switch (viewOrderViewModel.getOrderStatusObservable().getValue()) {
+                case Confirmed:
+                case Preparing:
+                    if (viewOrderViewModel.getStaffStatusObservable().getValue() == StaffStatus.Notified) {
+                        new MaterialAlertDialogBuilder(getContext())
+                                .setTitle("Заказ подготовлен?")
+                                .setMessage("Заказ подготовлен и вы желаете оповистить пользователя?")
+                                .setNegativeButton("Отменить", (dialogInterface, i) -> {
+                                })
+                                .setPositiveButton("Подготовлен", (dialogInterface, i) -> {
+                                    viewOrderViewModel.prepareOrder();
+                                })
+                                .show();
+                    } else {
+                        new MaterialAlertDialogBuilder(getContext())
+                                .setTitle("Взять заказ в работу?")
+                                .setMessage("Вы хотите взять в заказ в работу и начать его исполнение?")
+                                .setNegativeButton("Отменить", (dialogInterface, i) -> {
+                                })
+                                .setPositiveButton("Взять в работу", (dialogInterface, i) -> {
+                                    viewOrderViewModel.takeOrderToWork();
+                                })
+                                .show();
+                    }
+                    break;
+                case Prepared:
+                    new MaterialAlertDialogBuilder(getContext())
+                            .setTitle("Завершить заказ?")
+                            .setMessage("Пользователь посетил ресторан и был обслужен.")
+                            .setNegativeButton("Отменить", (dialogInterface, i) -> {
+                            })
+                            .setPositiveButton("Завершить", (dialogInterface, i) -> {
+                                viewOrderViewModel.completeOrder();
+                            })
+                            .show();
+                    break;
+
+            }
+        });
+    }
+
     private void startLoadingAnimation(TextView textView) {
-        AlphaAnimation animation1 = new AlphaAnimation(0.2f, 1.0f);
-        animation1.setDuration(1000);
+        AlphaAnimation animation1 = new AlphaAnimation(1f, 0.2f);
+        animation1.setDuration(500);
         animation1.setRepeatCount(Integer.MAX_VALUE);
         textView.startAnimation(animation1);
     }
@@ -236,13 +287,29 @@ public class ViewOrderFragment extends Fragment {
 
     private void handleOrderStatus(OrderStatus status) {
         if (status != null) {
+            // Устанавливаем текст статуса
             String orderStatusString = orderStatusToStringConverter.convert(status);
 
-            if (viewOrderViewModel.getStaffStatusObservable().getValue() == StaffStatus.Notified) {
+            StaffStatus staffStatus = viewOrderViewModel.getStaffStatusObservable().getValue();
+            if (staffStatus == StaffStatus.Notified) {
                 orderStatusString += " (" + getContext().getResources().getString(R.string.staff_notified_status) + ")";
             }
 
             orderStatusTV.setText(orderStatusString);
+
+            // Обновляем текст кнопки, либо скрываем ее
+            if (status == OrderStatus.Prepared) {
+                orderWorkButton.setText(R.string.complete_the_order);
+                orderWorkButton.setVisibility(View.VISIBLE);
+            } else if ((status == OrderStatus.Preparing && staffStatus == StaffStatus.Notifying) || status == OrderStatus.Confirmed) {
+                orderWorkButton.setText(R.string.take_order_to_work);
+                orderWorkButton.setVisibility(View.VISIBLE);
+            } else if (status == OrderStatus.Preparing || staffStatus == StaffStatus.Notified) {
+                orderWorkButton.setText(R.string.notify_client_about_oder_ready);
+                orderWorkButton.setVisibility(View.VISIBLE);
+            } else {
+                orderWorkButton.setVisibility(View.GONE);
+            }
         } else {
             orderStatusTV.setText(R.string.unknown_text);
         }
@@ -297,7 +364,7 @@ public class ViewOrderFragment extends Fragment {
 
     private void handleFullInfoLoaded(Boolean isLoaded) {
         if (isLoaded) {
-            shortOrderLoadingProgressBar.setVisibility(View.GONE);
+            shortOrderLoadingProgressBar.setVisibility(View.INVISIBLE);
             orderPersonTV.clearAnimation();
             restaurantAddressTV.clearAnimation();
             orderTableTV.clearAnimation();

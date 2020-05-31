@@ -222,7 +222,7 @@ public class OrdersService {
                 ;
     }
 
-    public Single<OrderModel> takeToWork(FullOrder order) {
+    public Single<OrderModel> takeToWork(OrderModel order) {
         OrderPathModel newInfo = new OrderPathModel(OrderStatus.Preparing,
                 StaffStatus.Notified,
                 StaffStatus.Notified,
@@ -232,7 +232,7 @@ public class OrdersService {
         return this.ordersApiService.pathOrder(order.getId(), newInfo);
     }
 
-    public Single<OrderModel> prepareOrder(FullOrder order) {
+    public Single<OrderModel> prepareOrder(OrderModel order) {
         OrderPathModel newInfo = new OrderPathModel(OrderStatus.Prepared,
                 StaffStatus.Ready,
                 StaffStatus.Ready,
@@ -242,7 +242,7 @@ public class OrdersService {
         return this.ordersApiService.pathOrder(order.getId(), newInfo);
     }
 
-    public Single<OrderModel> completeOrder(FullOrder order) {
+    public Single<OrderModel> completeOrder(OrderModel order) {
         OrderPathModel newInfo = new OrderPathModel(OrderStatus.Completed,
                 null,
                 null,

@@ -1,5 +1,6 @@
 package com.example.restaurantemployerapplication.ui.order;
 
+import android.nfc.Tag;
 import android.util.Log;
 
 import androidx.annotation.Nullable;
@@ -25,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.CompletableOnSubscribe;
+import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.disposables.CompositeDisposable;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
@@ -161,6 +163,40 @@ public class ViewOrderViewModel extends ViewModel {
     }
 
     private void initShortOrderInfo(OrderModel order) {
+        this.setShortOrderInfo(order);
+
+        // Подписываемся на обновление заказа
+        Disposable updateSubscriber = Observable.interval(5, TimeUnit.SECONDS)
+                .flatMap(time -> this.ordersService.getOrderById(order.getId()).toObservable())
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .distinctUntilChanged()
+                .subscribe(this::setShortOrderInfo
+                        , error -> {
+                            Log.e(TAG, "Update order error", error);
+                        });
+
+        compositeDisposable.add(updateSubscriber);
+
+        // Получаем полную информацию о заказе, если она отсутсвует.
+        Disposable fullOrderSubscriber = this.ordersService.getFullOrder(this.shortOrder)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(
+                        this::initFullOrderInfo,
+                        error -> {
+                            isFullInfoErrorSubject.setValue(true);
+                            Log.e(TAG, "Can't get full order", error);
+                        }
+                );
+
+        compositeDisposable.add(fullOrderSubscriber);
+    }
+
+    private void setShortOrderInfo(OrderModel order) {
+        // Если обновлений нет, то пропускаем.
+        if (this.shortOrder != null && this.shortOrder.equals(order)) return;
+
         this.shortOrder = order;
         isShortInfoLoadedSubject.setValue(true);
 
@@ -190,19 +226,6 @@ public class ViewOrderViewModel extends ViewModel {
 
         FullVisitTime fullVisitTime = new FullVisitTime(order.getVisitTime());
         this.visitTimeSubject.setValue(fullVisitTime);
-
-        Disposable fullOrderSubscriber = this.ordersService.getFullOrder(this.shortOrder)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribeOn(Schedulers.io())
-                .subscribe(
-                        this::initFullOrderInfo,
-                        error -> {
-                            isFullInfoErrorSubject.setValue(true);
-                            Log.e(TAG, "Can't get full order", error);
-                        }
-                );
-
-        compositeDisposable.add(fullOrderSubscriber);
     }
 
     private void initFullOrderInfo(FullOrder order) {
@@ -357,5 +380,35 @@ public class ViewOrderViewModel extends ViewModel {
      */
     public LiveData<Boolean> getIsFullInfoErrorObservable() {
         return isFullInfoErrorSubject;
+    }
+
+    public void prepareOrder() {
+        this.ordersService.prepareOrder(this.shortOrder)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(orderUpdate -> {
+                }, error -> {
+                    Log.e(TAG, "Failed to prepare order", error);
+                });
+    }
+
+    public void takeOrderToWork() {
+        this.ordersService.takeToWork(this.shortOrder)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(orderUpdate -> {
+                }, error -> {
+                    Log.e(TAG, "Failed to accept work order", error);
+                });
+    }
+
+    public void completeOrder() {
+        this.ordersService.completeOrder(this.shortOrder)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(orderUpdate -> {
+                }, error -> {
+                    Log.e(TAG, "Failed to complete order", error);
+                });
     }
 }
