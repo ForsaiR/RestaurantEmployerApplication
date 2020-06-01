@@ -3,8 +3,8 @@ package com.example.restaurantemployerapplication.data.model;
 import com.example.restaurantemployerapplication.services.RfcToCalendarConverter;
 import com.tamagotchi.tamagotchiserverprotocol.models.OrderModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.RestaurantModel;
+import com.tamagotchi.tamagotchiserverprotocol.models.TableModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.UserModel;
-import com.tamagotchi.tamagotchiserverprotocol.models.VisitTime;
 import com.tamagotchi.tamagotchiserverprotocol.models.enums.OrderStatus;
 import com.tamagotchi.tamagotchiserverprotocol.models.enums.StaffStatus;
 
@@ -21,12 +21,31 @@ public class FullOrder {
     private OrderStatus orderStatus;
     private StaffStatus orderCooksStatus;
     private StaffStatus orderWaitersStatus;
-    private List<Integer> cooks;
-    private List<Integer> waiters;
+    private TableModel reservedTable;
+    private List<UserModel> cooks;
+    private List<UserModel> waiters;
     private Integer totalAmount;
     private Integer id;
     private FullVisitTime visitTime;
     private Calendar timeCreated;
+
+    public FullOrder(OrderModel orderModel) {
+        this.restaurant = null;
+        this.client = null;
+        this.menu = null;
+        this.numberOfPersons = orderModel.getNumberOfPersons();
+        this.comment = orderModel.getComment();
+        this.orderStatus = orderModel.getOrderStatus();
+        this.orderCooksStatus = orderModel.getOrderCooksStatus();
+        this.orderWaitersStatus = orderModel.getOrderWaitersStatus();
+        this.reservedTable = null;
+        this.cooks = null;
+        this.waiters = null;
+        this.totalAmount = orderModel.getTotalAmount();
+        this.id = orderModel.getId();
+        this.visitTime = new FullVisitTime(orderModel.getVisitTime());
+        this.timeCreated = RfcToCalendarConverter.convert(orderModel.getTimeCreated());
+    }
 
     public FullOrder(RestaurantModel restaurant,
                      UserModel client,
@@ -36,8 +55,9 @@ public class FullOrder {
                      OrderStatus orderStatus,
                      StaffStatus orderCooksStatus,
                      StaffStatus orderWaitersStatus,
-                     List<Integer> cooks,
-                     List<Integer> waiters,
+                     TableModel reservedTable,
+                     List<UserModel> cooks,
+                     List<UserModel> waiters,
                      Integer totalAmount,
                      Integer id,
                      FullVisitTime visitTime,
@@ -50,6 +70,7 @@ public class FullOrder {
         this.orderStatus = orderStatus;
         this.orderCooksStatus = orderCooksStatus;
         this.orderWaitersStatus = orderWaitersStatus;
+        this.reservedTable = reservedTable;
         this.cooks = cooks;
         this.waiters = waiters;
         this.totalAmount = totalAmount;
@@ -58,21 +79,64 @@ public class FullOrder {
         this.timeCreated = timeCreated;
     }
 
-    public FullOrder(OrderModel orderModel, List<FullMenuItem> menuItems) {
-        this.restaurant = null;
-        this.client = null;
+    public FullOrder(FullOrder order, List<FullMenuItem> menuItems) {
+        this.restaurant = order.getRestaurant();
+        this.client = order.getClient();
         this.menu = menuItems;
-        this.numberOfPersons = orderModel.getNumberOfPersons();
-        this.comment = orderModel.getComment();
-        this.orderStatus = orderModel.getOrderStatus();
-        this.orderCooksStatus = orderModel.getOrderCooksStatus();
-        this.orderWaitersStatus = orderModel.getOrderWaitersStatus();
-        this.cooks = orderModel.getCooks();
-        this.waiters = orderModel.getWaiters();
-        this.totalAmount = orderModel.getTotalAmount();
-        this.id = orderModel.getId();
-        this.visitTime = new FullVisitTime(orderModel.getVisitTime());
-        this.timeCreated = RfcToCalendarConverter.convert(orderModel.getTimeCreated());
+        this.numberOfPersons = order.getNumberOfPersons();
+        this.comment = order.getComment();
+        this.orderStatus = order.getOrderStatus();
+        this.orderCooksStatus = order.getOrderCooksStatus();
+        this.orderWaitersStatus = order.getOrderWaitersStatus();
+        this.reservedTable = order.getReservedTable();
+        this.cooks = order.getCooks();
+        this.waiters = order.getWaiters();
+        this.totalAmount = order.getTotalAmount();
+        this.id = order.getId();
+        this.visitTime = order.getVisitTime();
+        this.timeCreated = order.getTimeCreated();
+    }
+
+    public FullOrder(FullOrder order, TableModel reservedTable) {
+        this.restaurant = order.getRestaurant();
+        this.client = order.getClient();
+        this.menu = order.getMenu();
+        this.numberOfPersons = order.getNumberOfPersons();
+        this.comment = order.getComment();
+        this.orderStatus = order.getOrderStatus();
+        this.orderCooksStatus = order.getOrderCooksStatus();
+        this.orderWaitersStatus = order.getOrderWaitersStatus();
+        this.reservedTable = reservedTable;
+        this.cooks = order.getCooks();
+        this.waiters = order.getWaiters();
+        this.totalAmount = order.getTotalAmount();
+        this.id = order.getId();
+        this.visitTime = order.getVisitTime();
+        this.timeCreated = order.getTimeCreated();
+    }
+
+    public FullOrder(FullOrder order, List<UserModel> staff, boolean isCooks) {
+        this.restaurant = order.getRestaurant();
+        this.client = order.getClient();
+        this.menu = order.getMenu();
+        this.numberOfPersons = order.getNumberOfPersons();
+        this.comment = order.getComment();
+        this.orderStatus = order.getOrderStatus();
+        this.orderCooksStatus = order.getOrderCooksStatus();
+        this.orderWaitersStatus = order.getOrderWaitersStatus();
+        this.reservedTable = order.getReservedTable();
+        this.totalAmount = order.getTotalAmount();
+        this.id = order.getId();
+        this.visitTime = order.getVisitTime();
+        this.timeCreated = order.getTimeCreated();
+
+        if (isCooks) {
+            this.cooks = staff;
+            this.waiters = order.getWaiters();
+        } else {
+            this.cooks = order.getCooks();
+            this.waiters = staff;
+        }
     }
 
     public FullOrder(FullOrder order, RestaurantModel restaurant) {
@@ -84,6 +148,7 @@ public class FullOrder {
         this.orderStatus = order.getOrderStatus();
         this.orderCooksStatus = order.getOrderCooksStatus();
         this.orderWaitersStatus = order.getOrderWaitersStatus();
+        this.reservedTable = order.getReservedTable();
         this.cooks = order.getCooks();
         this.waiters = order.getWaiters();
         this.totalAmount = order.getTotalAmount();
@@ -101,6 +166,7 @@ public class FullOrder {
         this.orderStatus = order.getOrderStatus();
         this.orderCooksStatus = order.getOrderCooksStatus();
         this.orderWaitersStatus = order.getOrderWaitersStatus();
+        this.reservedTable = order.getReservedTable();
         this.cooks = order.getCooks();
         this.waiters = order.getWaiters();
         this.totalAmount = order.getTotalAmount();
@@ -141,11 +207,11 @@ public class FullOrder {
         return orderWaitersStatus;
     }
 
-    public List<Integer> getCooks() {
+    public List<UserModel> getCooks() {
         return cooks;
     }
 
-    public List<Integer> getWaiters() {
+    public List<UserModel> getWaiters() {
         return waiters;
     }
 
@@ -159,6 +225,10 @@ public class FullOrder {
 
     public FullVisitTime getVisitTime() {
         return visitTime;
+    }
+
+    public TableModel getReservedTable() {
+        return reservedTable;
     }
 
     public Calendar getTimeCreated() {
@@ -178,6 +248,7 @@ public class FullOrder {
                 orderStatus == fullOrder.orderStatus &&
                 orderCooksStatus == fullOrder.orderCooksStatus &&
                 orderWaitersStatus == fullOrder.orderWaitersStatus &&
+                Objects.equals(reservedTable, fullOrder.reservedTable) &&
                 Objects.equals(cooks, fullOrder.cooks) &&
                 Objects.equals(waiters, fullOrder.waiters) &&
                 Objects.equals(totalAmount, fullOrder.totalAmount) &&
@@ -188,6 +259,6 @@ public class FullOrder {
 
     @Override
     public int hashCode() {
-        return Objects.hash(restaurant, client, menu, numberOfPersons, comment, orderStatus, orderCooksStatus, orderWaitersStatus, cooks, waiters, totalAmount, id, visitTime, timeCreated);
+        return Objects.hash(restaurant, client, menu, numberOfPersons, comment, orderStatus, orderCooksStatus, orderWaitersStatus, reservedTable, cooks, waiters, totalAmount, id, visitTime, timeCreated);
     }
 }

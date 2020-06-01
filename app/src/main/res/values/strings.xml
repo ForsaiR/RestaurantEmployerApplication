@@ -25,4 +25,35 @@
     <string name="completed_status">Завершен</string>
     <string name="staff_notified_status">Персонал оповещен</string>
     <string name="tab_all_orders_label">Все заказы</string>
+
+    <!--content description -->
+    <string name="icon">icon</string>
+
+    <!-- view_order_fragment -->
+    <string name="visit_range_text">Время посещения:</string>
+    <string name="placeholder_visit_time_start">27.05.2020 16:30</string>
+    <string name="placeholder_visit_time_end">27.05.2020 18:30</string>
+    <string name="split">-</string>
+    <string name="restaurant_address_text">Адресс ресторана:</string>
+    <string name="placeholder_restaurant_address">Лиговский пр., 30 А, 5 этаж</string>
+    <string name="placeholder_persons_count">4</string>
+    <string name="persons_count_text">Кол-во посетителей:</string>
+    <string name="order_table_text">Забронированный столик:</string>
+    <string name="placeholder_order_table">№ 1</string>
+    <string name="show_order_check">Посмотреть чек</string>
+    <string name="complete_the_order">Завершить заказ</string>
+    <string name="take_order_to_work">Взять заказ в работу</string>
+    <string name="notify_client_about_oder_ready">Оповестить посетителя о готовности заказа</string>
+    <string name="order_payment_amount_text">Сумма оплаты заказа</string>
+    <string name="placeholder_order_payment_amount">3412</string>
+    <string name="order_menu_text">Меню заказа</string>
+    <string name="number_symbol">№</string>
+    <string name="placeholder_menu_item_name">Летучая мышь по китайски</string>
+    <string name="rub_symbol">₽</string>
+    <string name="order_person_text">Посетитель:</string>
+    <string name="placeholder_order_person">Василий (+71231241243)</string>
+    <string name="order_loading_error">Ошибка загрузки заказа</string>
+    <string name="unknown_text">\???</string>
+    <string name="loading_text">Загрузка</string>
+
 </resources>
