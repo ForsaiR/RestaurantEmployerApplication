@@ -3,6 +3,7 @@ package com.example.restaurantemployerapplication.data.model;
 import com.example.restaurantemployerapplication.services.RfcToCalendarConverter;
 import com.tamagotchi.tamagotchiserverprotocol.models.VisitTime;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -19,8 +20,13 @@ public class FullVisitTime {
     }
 
     private FullVisitTime(String start, String end) {
-        this.start = RfcToCalendarConverter.convert(start);
-        this.end = RfcToCalendarConverter.convert(end);
+        try {
+            this.start = RfcToCalendarConverter.convert(start);
+            this.end = RfcToCalendarConverter.convert(end);
+        } catch (ParseException e) {
+            this.start = null;
+            this.end = null;
+        }
     }
 
     public FullVisitTime(Calendar start, Calendar end) {

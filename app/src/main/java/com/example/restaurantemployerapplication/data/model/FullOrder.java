@@ -8,6 +8,7 @@ import com.tamagotchi.tamagotchiserverprotocol.models.UserModel;
 import com.tamagotchi.tamagotchiserverprotocol.models.enums.OrderStatus;
 import com.tamagotchi.tamagotchiserverprotocol.models.enums.StaffStatus;
 
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Objects;
@@ -44,7 +45,11 @@ public class FullOrder {
         this.totalAmount = orderModel.getTotalAmount();
         this.id = orderModel.getId();
         this.visitTime = new FullVisitTime(orderModel.getVisitTime());
-        this.timeCreated = RfcToCalendarConverter.convert(orderModel.getTimeCreated());
+        try {
+            this.timeCreated = RfcToCalendarConverter.convert(orderModel.getTimeCreated());
+        } catch (ParseException e) {
+            this.timeCreated = null;
+        }
     }
 
     public FullOrder(RestaurantModel restaurant,

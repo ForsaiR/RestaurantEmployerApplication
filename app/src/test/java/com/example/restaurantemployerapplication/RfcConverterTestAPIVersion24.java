@@ -12,13 +12,12 @@ import java.text.ParseException;
 import java.util.Calendar;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 
-public class RfcConverterTest {
+public class RfcConverterTestAPIVersion24 {
     @Before
     public void setSdkVersion() {
-        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 26);
+        Whitebox.setInternalState(Build.VERSION.class, "SDK_INT", 24);
     }
 
     @Test
@@ -63,5 +62,18 @@ public class RfcConverterTest {
 
         // Then
         assertNull(convertException);
+    }
+
+    @Test
+    public void Should_ReturnCorrectCalendar_When_StringRfcWithMillisecond() throws ParseException {
+        // Given
+        String rfcString = "2020-05-19T19:00:00.57+03:00";
+        long rfcTimestamp = 1589904000;
+
+        // When
+        Calendar calendar = RfcToCalendarConverter.convert(rfcString);
+
+        // Then
+        assertEquals(rfcTimestamp, calendar.toInstant().getEpochSecond());
     }
 }
