@@ -1,6 +1,5 @@
 package com.example.restaurantemployerapplication.services;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -51,6 +50,7 @@ public class RfcToCalendarConverter {
                 throw ex;
             }
         }
+
         calendar.setTime(date);
         return calendar;
     }

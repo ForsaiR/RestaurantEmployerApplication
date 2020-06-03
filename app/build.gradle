@@ -40,10 +40,10 @@ dependencies {
     testImplementation 'junit:junit:4.13'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
-    androidTestImplementation 'org.easymock:easymock:4.2'
+    androidTestImplementation 'org.easymock:easymock:4.0.1'
 
     // Remote Library
-    implementation 'com.github.paulrozhkin:tamagotchi-remote-library:1.2.0'
+    implementation 'com.github.paulrozhkin:tamagotchi-remote-library:1.2.1'
 
     // Retrofit and rx
     implementation 'com.squareup.retrofit2:retrofit:2.9.0'
