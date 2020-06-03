@@ -37,24 +37,4 @@ public class MainViewModel extends ViewModel {
     void logOut() {
         authenticationService.signOut();
     }
-
-//    void takeOrderToWork(FullOrder order) {
-//        this.ordersService.takeToWork(order).subscribeOn(Schedulers.io()).subscribe();
-//    }
-//
-//    void prepareOrder(FullOrder order) {
-//        this.ordersService.prepareOrder(order).subscribeOn(Schedulers.io()).subscribe();
-//    }
-//
-//    void completeOrder(FullOrder order) {
-//        this.ordersService.completeOrder(order).subscribeOn(Schedulers.io()).subscribe();
-//    }
-//
-//    public void setSelectedOrder(FullOrder order) {
-//        selectedOrderSubject.setValue(order);
-//    }
-//
-//    public LiveData<FullOrder> getSelectedOrder() {
-//        return selectedOrderSubject;
-//    }
 }
