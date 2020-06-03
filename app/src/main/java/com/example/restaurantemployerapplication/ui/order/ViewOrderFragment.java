@@ -258,7 +258,7 @@ public class ViewOrderFragment extends Fragment {
         try {
             Calendar startTime = fullVisitTime.getStart();
             timeStartString = timeFormat.format(startTime.getTime());
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             Log.e(TAG, "Can't convert start visit time", ex);
         }
 
@@ -274,7 +274,7 @@ public class ViewOrderFragment extends Fragment {
         try {
             Calendar endTime = fullVisitTime.getEnd();
             timeEndString = timeFormat.format(endTime.getTime());
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             Log.e(TAG, "Can't convert end visit time", ex);
         }
 

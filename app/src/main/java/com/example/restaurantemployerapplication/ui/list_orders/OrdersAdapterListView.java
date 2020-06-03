@@ -69,7 +69,7 @@ public class OrdersAdapterListView extends ArrayAdapter<OrderModel> {
         try {
             Calendar startTime = RfcToCalendarConverter.convert(order.getVisitTime().getStart());
             timeString = timeFormat.format(startTime.getTime());
-        } catch (IllegalArgumentException ex) {
+        } catch (Exception ex) {
             Log.e(TAG, "Can't convert visit time", ex);
         }
 
